@@ -71,7 +71,7 @@ impl ProcessTable {
         Ok(self.process_bank.map_process_list(processes))
     }
 
-    fn update(&mut self, device: &Device) {
+    pub fn update(&mut self, device: &Device) {
         // Refresh the process data every 1 second
         if self.last_refresh.is_none() || self.last_refresh.unwrap().elapsed().as_millis() > 1000 {
             self.processes = self.fetch_last_process_array(device);
@@ -116,9 +116,7 @@ impl ProcessTable {
         }
     }
 
-    pub fn ui(&mut self, ui: &mut egui::Ui, device: &Device) {
-        self.update(device);
-
+    pub fn ui(&mut self, ui: &mut egui::Ui) {
         if let Err(err) = &self.processes {
             ui.label("Failed to fetch process list");
             ui.label(format!("Error: {}", err));

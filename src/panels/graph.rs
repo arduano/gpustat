@@ -7,31 +7,35 @@ use eframe::{
 };
 
 pub struct GraphViewer {
-    historical: VecDeque<f32>,
-    value_to_string: Box<dyn Fn(f32) -> String>,
+    historical: VecDeque<Option<f32>>,
 }
 
 impl GraphViewer {
-    pub fn new(value_to_string: impl 'static + Fn(f32) -> String) -> Self {
+    pub fn new() -> Self {
         Self {
             historical: VecDeque::new(),
-            value_to_string: Box::new(value_to_string),
         }
     }
 
-    pub fn update(&mut self, value: f32) {
+    pub fn update(&mut self, value: Option<f32>) {
         self.historical.push_front(value);
     }
 
-    pub fn render(&mut self, ui: &mut Ui) {
+    pub fn render(
+        &mut self,
+        ui: &mut Ui,
+        max_value: f32,
+        value_to_string: impl 'static + Fn(f32) -> String,
+    ) {
         let mut highest_index = 0;
         render_graph_body(
             ui,
             |i| {
                 highest_index = highest_index.max(i);
-                self.historical.get(i).copied()
+                self.historical.get(i).copied().flatten()
             },
-            &self.value_to_string,
+            max_value,
+            value_to_string,
         );
 
         // purge old values
@@ -44,6 +48,7 @@ impl GraphViewer {
 pub fn render_graph_body(
     ui: &mut Ui,
     mut get_value_at: impl FnMut(usize) -> Option<f32>,
+    max_value: f32,
     value_to_string: impl Fn(f32) -> String,
 ) {
     let available_space = ui.available_size();
@@ -60,8 +65,9 @@ pub fn render_graph_body(
     ui.painter()
         .rect_filled(rect, style.visuals.window_rounding, bg);
 
-    let edge_padding = 7.5;
-    let text_width = 30.0;
+    let edge_padding = 10.5;
+    let text_width = 50.0;
+    let text_padding = 5.0;
     let rect = Rect {
         min: Pos2::new(
             rect.left() + edge_padding + text_width,
@@ -84,7 +90,7 @@ pub fn render_graph_body(
     let make_guideline = |height: f32, should_draw_line: bool| {
         let y = rect.bottom() - (height * rect.height());
         let y = y.round() - 0.5;
-        let text = value_to_string(height);
+        let text = value_to_string(height * max_value);
         GuideLine {
             y,
             text,
@@ -111,7 +117,7 @@ pub fn render_graph_body(
         }
 
         ui.painter().text(
-            Pos2::new(rect.left() - 3.0, line.y),
+            Pos2::new(rect.left() - text_padding, line.y),
             Align2::RIGHT_CENTER,
             &line.text,
             font.clone(),
@@ -121,8 +127,12 @@ pub fn render_graph_body(
 
     if let Some(value) = get_value_at(0) {
         let text = value_to_string(value);
+        let value = value / max_value;
         ui.painter().text(
-            Pos2::new(rect.right() + 3.0, rect.bottom() - (value * rect.height())),
+            Pos2::new(
+                rect.right() + text_padding,
+                rect.bottom() - (value * rect.height()),
+            ),
             Align2::LEFT_CENTER,
             &text,
             font.clone(),
@@ -141,9 +151,10 @@ pub fn render_graph_body(
 
     let mut points = Vec::new();
     let mut curr_points = Vec::new();
-    let width = rect.width() as usize;
+    let width = rect.width() as usize + 1;
     for i in 0..width {
         if let Some(value) = get_value_at(i) {
+            let value = value / max_value;
             curr_points.push(Point {
                 position: Pos2 {
                     x: rect.right() - (i as f32),
