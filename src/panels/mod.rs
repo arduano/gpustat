@@ -1,2 +1,2 @@
-pub mod process_table;
 pub mod graph;
+pub mod process_table;

@@ -3,9 +3,8 @@ use std::collections::VecDeque;
 use eframe::{
     egui::{Sense, TextStyle, Ui},
     emath::Align2,
-    epaint::{Color32, FontFamily, Pos2, Rect, Shape, Stroke, Vec2},
+    epaint::{Color32, Pos2, Rect, Shape, Stroke},
 };
-use nvml_wrapper::Device;
 
 pub struct GraphViewer {
     historical: VecDeque<f32>,

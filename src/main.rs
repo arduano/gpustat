@@ -1,27 +1,13 @@
-use std::{collections::HashMap, time::Instant};
+use std::time::Instant;
 
 use eframe::{
-    egui::{
-        self,
-        style::{Spacing, WidgetVisuals, Widgets},
-        FontDefinitions, Layout, Sense, Style, TextStyle, Visuals,
-    },
-    emath::Align,
-    epaint::{Color32, FontFamily, FontId, Pos2, Vec2},
+    egui::{self},
+    epaint::Vec2,
 };
 
-use egui_extras::{Column, TableBuilder};
-use nvml_wrapper::{
-    enums::device::UsedGpuMemory,
-    error::NvmlError,
-    struct_wrappers::device::{MemoryInfo, ProcessInfo},
-    Device, Nvml,
-};
-use panels::{
-    graph::{render_graph_body, GraphViewer},
-    process_table::ProcessTable,
-};
-use processes::{ProcessData, ProcessDataBank};
+use nvml_wrapper::Nvml;
+use panels::{graph::GraphViewer, process_table::ProcessTable};
+
 use style::make_style;
 
 mod panels;
@@ -39,22 +25,6 @@ fn main() {
         options,
         Box::new(|_cc| Box::new(MyApp::default())),
     );
-}
-
-struct GpuData {
-    uuid: String,
-    persistent: PersistentGpuData,
-    dynamic: DynamicGpuData,
-}
-
-struct PersistentGpuData {
-    name: String,
-}
-
-struct DynamicGpuData {
-    memory_info: Result<MemoryInfo, NvmlError>,
-    graphics_processes: Result<Vec<ProcessInfo>, NvmlError>,
-    compute_processes: Result<Vec<ProcessInfo>, NvmlError>,
 }
 
 struct MyApp {
@@ -112,25 +82,5 @@ impl eframe::App for MyApp {
             self.table.ui(ui, &device);
             ctx.request_repaint();
         });
-    }
-}
-
-struct GpuDataView {
-    persistent: PersistentGpuData,
-}
-
-fn fetch_persistent_device_info(device: &Device) -> PersistentGpuData {
-    PersistentGpuData {
-        name: device
-            .name()
-            .unwrap_or_else(|_| "<Failed to get GPU name>".to_string()),
-    }
-}
-
-fn fetch_dynamic_device_info(device: &Device) -> DynamicGpuData {
-    DynamicGpuData {
-        memory_info: device.memory_info(),
-        graphics_processes: device.running_graphics_processes(),
-        compute_processes: device.running_compute_processes(),
     }
 }

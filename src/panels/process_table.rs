@@ -1,9 +1,9 @@
 use std::cmp::Ordering;
 
 use eframe::{
-    egui::{self, Label, Layout, Sense},
+    egui::{self, Layout, Sense},
     emath::Align,
-    epaint::{Rect, Vec2},
+    epaint::Rect,
 };
 use egui_extras::{Column, TableBuilder};
 use nvml_wrapper::{

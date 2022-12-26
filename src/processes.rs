@@ -1,7 +1,5 @@
-use std::collections::HashMap;
-
 use nvml_wrapper::struct_wrappers::device::ProcessInfo;
-use sysinfo::{Pid, ProcessExt, ProcessRefreshKind, RefreshKind, System, SystemExt};
+use sysinfo::{ProcessExt, ProcessRefreshKind, RefreshKind, System, SystemExt};
 
 pub struct ProcessDataBank {
     sys: sysinfo::System,
