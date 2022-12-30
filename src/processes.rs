@@ -32,6 +32,11 @@ impl ProcessDataBank {
 
         let mut result = Vec::new();
         for process in process_list {
+            // We skip system processes that often clog up the list without using any resources
+            if process.pid == 0 {
+                continue;
+            }
+
             result.push(ProcessData {
                 name: self.get_process_name(process.pid).to_string(),
                 info: process,

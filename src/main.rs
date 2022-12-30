@@ -1,11 +1,12 @@
 use std::time::Instant;
 
 use eframe::{
-    egui::{self},
+    egui::{self, Layout},
+    emath::Align,
     epaint::Vec2,
 };
 
-use nvml_wrapper::{Device, Nvml};
+use nvml_wrapper::{enum_wrappers::device::TemperatureSensor, Device, Nvml};
 use panels::{graph::GraphViewer, process_table::ProcessTable};
 
 use style::make_style;
@@ -27,8 +28,16 @@ fn main() {
     );
 }
 
+#[derive(Default, Debug, PartialEq, Eq)]
+enum SelectedProcessTab {
+    #[default]
+    Graphics,
+    Compute,
+}
+
 struct MyApp {
     nvml: Nvml,
+    selected_process_tab: SelectedProcessTab,
     monitor: GpuDeviceMonitor,
     updated_style: bool,
 }
@@ -38,7 +47,10 @@ struct GpuDeviceMonitor {
     last_graph_update: Option<Instant>,
     usage_graph: GraphViewer,
     memory_graph: GraphViewer,
-    processes: ProcessTable,
+    temperature_graph: GraphViewer,
+
+    graphics_processes: ProcessTable,
+    compute_processes: ProcessTable,
 }
 
 impl GpuDeviceMonitor {
@@ -48,7 +60,14 @@ impl GpuDeviceMonitor {
             last_graph_update: None,
             usage_graph: GraphViewer::new(),
             memory_graph: GraphViewer::new(),
-            processes: ProcessTable::new(Box::new(|device| device.running_graphics_processes())),
+            temperature_graph: GraphViewer::new(),
+
+            graphics_processes: ProcessTable::new(Box::new(|device| {
+                device.running_graphics_processes()
+            })),
+            compute_processes: ProcessTable::new(Box::new(|device| {
+                device.running_compute_processes()
+            })),
         }
     }
 
@@ -64,9 +83,16 @@ impl GpuDeviceMonitor {
 
             let used = device.memory_info().map(|m| m.used as f32).ok();
             self.memory_graph.update(used);
+
+            let used = device
+                .temperature(TemperatureSensor::Gpu)
+                .map(|m| m as f32)
+                .ok();
+            self.temperature_graph.update(used);
         }
 
-        self.processes.update(device);
+        self.graphics_processes.update(device);
+        self.compute_processes.update(device);
     }
 }
 
@@ -79,6 +105,7 @@ impl Default for MyApp {
         Self {
             nvml,
             updated_style: false,
+            selected_process_tab: SelectedProcessTab::Graphics,
             monitor,
         }
     }
@@ -106,7 +133,7 @@ impl eframe::App for MyApp {
         self.monitor.update(&device);
 
         egui::TopBottomPanel::top("top")
-            .exact_height(300.0)
+            .exact_height(400.0)
             .show(ctx, |ui| {
                 let width = ui.available_width();
 
@@ -134,11 +161,57 @@ impl eframe::App for MyApp {
                         .memory_graph
                         .render(ui, max_ram, |v| bytes_to_mib_gib(v));
                 });
+
+                ui.add_space(5.0);
+
+                ui.label("GPU Temperature");
+
+                ui.allocate_ui(Vec2::new(width, 100.0), |ui| {
+                    self.monitor
+                        .temperature_graph
+                        .render(ui, 100.0, |v| format!("{:.0}°C", v));
+                });
             });
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            self.monitor.processes.ui(ui);
-            ctx.request_repaint();
+            let width = ui.available_width();
+            ui.allocate_ui_with_layout(
+                Vec2::new(width, 20.0),
+                Layout::left_to_right(Align::Center),
+                |ui| {
+                    ui.selectable_value(
+                        &mut self.selected_process_tab,
+                        SelectedProcessTab::Graphics,
+                        "Graphics",
+                    );
+                    ui.selectable_value(
+                        &mut self.selected_process_tab,
+                        SelectedProcessTab::Compute,
+                        "Compute",
+                    );
+                },
+            );
+
+            match self.selected_process_tab {
+                SelectedProcessTab::Compute => {
+                    let mut ui = ui.child_ui_with_id_source(
+                        ui.available_rect_before_wrap(),
+                        Layout::top_down(Align::Min),
+                        "compute",
+                    );
+                    self.monitor.compute_processes.ui(&mut ui);
+                }
+                SelectedProcessTab::Graphics => {
+                    let mut ui = ui.child_ui_with_id_source(
+                        ui.available_rect_before_wrap(),
+                        Layout::top_down(Align::Min),
+                        "graphics",
+                    );
+                    self.monitor.graphics_processes.ui(&mut ui);
+                }
+            };
         });
+
+        ctx.request_repaint();
     }
 }
