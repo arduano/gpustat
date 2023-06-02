@@ -6,45 +6,9 @@ use eframe::{
 
 use crate::data::graph::GraphViewerData;
 
-pub struct GraphViewer {
-    data: GraphViewerData,
-}
-
-impl GraphViewer {
-    pub fn new() -> Self {
-        Self {
-            data: GraphViewerData::new(),
-        }
-    }
-
-    pub fn update(&mut self, value: Option<f32>) {
-        self.data.update(value);
-    }
-
-    pub fn render(
-        &mut self,
-        ui: &mut Ui,
-        max_value: f32,
-        value_to_string: impl 'static + Fn(f32) -> String,
-    ) {
-        let mut highest_index = 0;
-        render_graph_body(
-            ui,
-            |i| {
-                highest_index = highest_index.max(i);
-                self.data.get_value_at(i)
-            },
-            max_value,
-            value_to_string,
-        );
-
-        self.data.trim_length(highest_index)
-    }
-}
-
-pub fn render_graph_body(
+pub fn render_graph(
     ui: &mut Ui,
-    mut get_value_at: impl FnMut(usize) -> Option<f32>,
+    graph_data: &GraphViewerData,
     max_value: f32,
     value_to_string: impl Fn(f32) -> String,
 ) {
@@ -122,7 +86,7 @@ pub fn render_graph_body(
         );
     }
 
-    if let Some(value) = get_value_at(0) {
+    if let Some(value) = graph_data.get_value_at(0) {
         let text = value_to_string(value);
         let value = value / max_value;
         ui.painter().text(
@@ -150,7 +114,7 @@ pub fn render_graph_body(
     let mut curr_points = Vec::new();
     let width = rect.width() as usize + 1;
     for i in 0..width {
-        if let Some(value) = get_value_at(i) {
+        if let Some(value) = graph_data.get_value_at(i) {
             let value = value / max_value;
             curr_points.push(Point {
                 position: Pos2 {

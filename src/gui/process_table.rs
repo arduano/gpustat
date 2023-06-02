@@ -12,81 +12,64 @@ use crate::data::process_table::{
     ProcessTableData, ProcessTableSorting, SortingDirection, TableColumn,
 };
 
-pub struct ProcessTable {
-    data: ProcessTableData,
-}
-
-impl ProcessTable {
-    pub fn new(fetcher: Box<dyn Fn(&Device) -> Result<Vec<ProcessInfo>, NvmlError>>) -> Self {
-        Self {
-            data: ProcessTableData::new(fetcher),
-        }
+pub fn render_process_table(ui: &mut egui::Ui, data: &mut ProcessTableData) {
+    if let Err(err) = &data.processes() {
+        ui.label("Failed to fetch process list");
+        ui.label(format!("Error: {}", err));
+        return;
     }
 
-    pub fn update(&mut self, device: &Device) {
-        self.data.update(device);
-    }
+    let old_spacing = ui.style_mut().spacing.item_spacing.x;
+    ui.style_mut().spacing.item_spacing.x = 0.0;
 
-    pub fn ui(&mut self, ui: &mut egui::Ui) {
-        if let Err(err) = &self.data.processes() {
-            ui.label("Failed to fetch process list");
-            ui.label(format!("Error: {}", err));
-            return;
-        }
-
-        let old_spacing = ui.style_mut().spacing.item_spacing.x;
-        ui.style_mut().spacing.item_spacing.x = 0.0;
-
-        let table = TableBuilder::new(ui)
-            .striped(true)
-            .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
-            .column(Column::auto())
-            .column(Column::initial(200.0).clip(true).resizable(true))
-            .column(Column::remainder())
-            .header(20.0, |mut header| {
-                header.col(|ui| {
-                    table_column_head(ui, TableColumn::Pid, "PID", &mut self.data.sorting_mut())
-                });
-                header.col(|ui| {
-                    table_column_head(ui, TableColumn::Name, "Name", &mut self.data.sorting_mut())
-                });
-                header.col(|ui| {
-                    table_column_head(
-                        ui,
-                        TableColumn::GpuMemory,
-                        "GPU Memory",
-                        &mut self.data.sorting_mut(),
-                    )
-                });
+    let table = TableBuilder::new(ui)
+        .striped(true)
+        .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
+        .column(Column::auto())
+        .column(Column::initial(200.0).clip(true).resizable(true))
+        .column(Column::remainder())
+        .header(20.0, |mut header| {
+            header
+                .col(|ui| table_column_head(ui, TableColumn::Pid, "PID", &mut data.sorting_mut()));
+            header.col(|ui| {
+                table_column_head(ui, TableColumn::Name, "Name", &mut data.sorting_mut())
             });
-
-        table.body(|mut body| {
-            let processes = self.data.get_processes_sorted();
-            if let Ok(processes) = processes {
-                for process in processes {
-                    body.row(20.0, |mut row| {
-                        row.col(|ui| {
-                            draw_table_cell(ui, |ui| {
-                                ui.label(process.info.pid.to_string());
-                            });
-                        });
-                        row.col(|ui| {
-                            draw_table_cell(ui, |ui| {
-                                ui.label(&process.name);
-                            });
-                        });
-                        row.col(|ui| {
-                            draw_table_cell(ui, |ui| {
-                                ui.label(format_used_gpu_memory(&process.info.used_gpu_memory));
-                            });
-                        });
-                    });
-                }
-            }
+            header.col(|ui| {
+                table_column_head(
+                    ui,
+                    TableColumn::GpuMemory,
+                    "GPU Memory",
+                    &mut data.sorting_mut(),
+                )
+            });
         });
 
-        ui.style_mut().spacing.item_spacing.x = old_spacing;
-    }
+    table.body(|mut body| {
+        let processes = data.get_processes_sorted();
+        if let Ok(processes) = processes {
+            for process in processes {
+                body.row(20.0, |mut row| {
+                    row.col(|ui| {
+                        draw_table_cell(ui, |ui| {
+                            ui.label(process.info.pid.to_string());
+                        });
+                    });
+                    row.col(|ui| {
+                        draw_table_cell(ui, |ui| {
+                            ui.label(&process.name);
+                        });
+                    });
+                    row.col(|ui| {
+                        draw_table_cell(ui, |ui| {
+                            ui.label(format_used_gpu_memory(&process.info.used_gpu_memory));
+                        });
+                    });
+                });
+            }
+        }
+    });
+
+    ui.style_mut().spacing.item_spacing.x = old_spacing;
 }
 
 fn make_cell_ui_in_cell_rect(
