@@ -1,11 +1,5 @@
 use std::collections::VecDeque;
 
-use eframe::{
-    egui::{Sense, TextStyle, Ui},
-    emath::Align2,
-    epaint::{Color32, Pos2, Rect, Shape, Stroke},
-};
-
 pub struct GraphViewerData {
     historical: VecDeque<Option<f32>>,
 }

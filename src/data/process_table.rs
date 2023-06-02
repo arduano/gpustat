@@ -5,7 +5,7 @@ use eframe::{
     emath::Align,
     epaint::Rect,
 };
-use egui_extras::{Column, TableBuilder};
+
 use nvml_wrapper::{
     enums::device::UsedGpuMemory, error::NvmlError, struct_wrappers::device::ProcessInfo, Device,
 };

@@ -1,5 +1,3 @@
-use std::cmp::Ordering;
-
 use eframe::{
     egui::{self, Layout, Sense},
     emath::Align,
@@ -10,9 +8,8 @@ use nvml_wrapper::{
     enums::device::UsedGpuMemory, error::NvmlError, struct_wrappers::device::ProcessInfo, Device,
 };
 
-use crate::{
-    data::process_table::{ProcessTableData, ProcessTableSorting, SortingDirection, TableColumn},
-    processes::{ProcessData, ProcessDataBank},
+use crate::data::process_table::{
+    ProcessTableData, ProcessTableSorting, SortingDirection, TableColumn,
 };
 
 pub struct ProcessTable {
