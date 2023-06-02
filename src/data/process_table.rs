@@ -1,11 +1,5 @@
 use std::cmp::Ordering;
 
-use eframe::{
-    egui::{self, Layout, Sense},
-    emath::Align,
-    epaint::Rect,
-};
-
 use nvml_wrapper::{
     enums::device::UsedGpuMemory, error::NvmlError, struct_wrappers::device::ProcessInfo, Device,
 };

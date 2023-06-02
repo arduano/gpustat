@@ -1,11 +1,8 @@
-use std::time::Instant;
-
 use eframe::{
     egui::{self, Layout},
     emath::Align,
     epaint::Vec2,
 };
-use nvml_wrapper::{enum_wrappers::device::TemperatureSensor, Device, Nvml};
 
 use style::make_style;
 

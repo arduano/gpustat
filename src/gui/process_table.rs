@@ -4,9 +4,7 @@ use eframe::{
     epaint::Rect,
 };
 use egui_extras::{Column, TableBuilder};
-use nvml_wrapper::{
-    enums::device::UsedGpuMemory, error::NvmlError, struct_wrappers::device::ProcessInfo, Device,
-};
+use nvml_wrapper::enums::device::UsedGpuMemory;
 
 use crate::data::process_table::{
     ProcessTableData, ProcessTableSorting, SortingDirection, TableColumn,
