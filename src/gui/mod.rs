@@ -1,5 +1,5 @@
 use eframe::{
-    egui::{self, Layout},
+    egui::{self, IconData, Layout},
     emath::Align,
     epaint::Vec2,
 };
@@ -14,6 +14,25 @@ mod graph;
 mod process_table;
 mod style;
 
+const ICON: &[u8] = include_bytes!("../../assets/icon_64px.png");
+
+fn load_icon(data: &[u8]) -> IconData {
+    let (icon_rgba, icon_width, icon_height) = {
+        let image = image::load_from_memory(data)
+            .expect("Failed to open icon path")
+            .into_rgba8();
+        let (width, height) = image.dimensions();
+        let rgba = image.into_raw();
+        (rgba, width, height)
+    };
+
+    IconData {
+        rgba: icon_rgba,
+        width: icon_width,
+        height: icon_height,
+    }
+}
+
 #[derive(Default, Debug, PartialEq, Eq)]
 enum SelectedProcessTab {
     #[default]
@@ -23,8 +42,11 @@ enum SelectedProcessTab {
 
 pub fn run_gpu_app() {
     let options = eframe::NativeOptions {
-        initial_window_size: Some(egui::vec2(500.0, 720.0)),
-        min_window_size: Some(egui::vec2(380.0, 600.0)),
+        window_builder: Some(Box::new(|w| {
+            w.with_icon(load_icon(ICON))
+                .with_inner_size(egui::vec2(500.0, 720.0))
+                .with_min_inner_size(egui::vec2(380.0, 600.0))
+        })),
         ..Default::default()
     };
 
@@ -32,7 +54,8 @@ pub fn run_gpu_app() {
         "gpustat",
         options,
         Box::new(|_cc| Box::new(GpuApp::default())),
-    );
+    )
+    .unwrap();
 }
 
 pub struct GpuApp {

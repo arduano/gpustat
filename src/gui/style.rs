@@ -39,6 +39,7 @@ pub fn make_style() -> Style {
                     bg_fill: primary,
                     bg_stroke: (0.0, Color32::from_rgb(0, 0, 0)).into(),
                     fg_stroke: (1.0, primary_text).into(),
+                    weak_bg_fill: lighten_by(primary, 0.1),
                 },
                 hovered: WidgetVisuals {
                     rounding: 5.0.into(),
@@ -46,6 +47,7 @@ pub fn make_style() -> Style {
                     bg_fill: primary_hover,
                     bg_stroke: (0.0, Color32::from_rgb(0, 0, 0)).into(),
                     fg_stroke: (1.0, primary_text).into(),
+                    weak_bg_fill: lighten_by(primary, 0.1),
                 },
                 active: WidgetVisuals {
                     rounding: 5.0.into(),
@@ -53,6 +55,7 @@ pub fn make_style() -> Style {
                     bg_fill: primary_interact,
                     bg_stroke: (0.0, Color32::from_rgb(0, 0, 0)).into(),
                     fg_stroke: (1.0, primary_text).into(),
+                    weak_bg_fill: lighten_by(primary, 0.1),
                 },
                 ..Default::default()
             },

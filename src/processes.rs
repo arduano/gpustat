@@ -1,5 +1,5 @@
 use nvml_wrapper::struct_wrappers::device::ProcessInfo;
-use sysinfo::{ProcessExt, ProcessRefreshKind, RefreshKind, System, SystemExt};
+use sysinfo::{ProcessRefreshKind, RefreshKind, System};
 
 pub struct ProcessDataBank {
     sys: sysinfo::System,
