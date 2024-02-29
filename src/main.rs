@@ -6,5 +6,6 @@ mod processes;
 mod utils;
 
 fn main() {
-    run_gpu_app()
+    // tui::run_tui_app();
+    run_gpu_app();
 }

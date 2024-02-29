@@ -110,10 +110,6 @@ impl ProcessTableData {
         }
     }
 
-    pub fn sorting(&self) -> &ProcessTableSorting {
-        &self.sorting
-    }
-
     pub fn sorting_mut(&mut self) -> &mut ProcessTableSorting {
         &mut self.sorting
     }
