@@ -23,6 +23,6 @@ pkgs.mkShell {
     ''
       export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${
         lib.makeLibraryPath libs
-      }"
+      }:/run/opengl-driver/lib"
     '';
 }

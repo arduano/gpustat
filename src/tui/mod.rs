@@ -5,17 +5,28 @@ use std::{
 };
 
 use crossterm::{
-    event::{DisableMouseCapture, EnableMouseCapture},
+    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyModifiers},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use eframe::App;
 use ratatui::{
     backend::{Backend, CrosstermBackend},
-    Terminal,
+    layout::{Alignment, Constraint, Layout, Rect},
+    style::{Color, Style, Stylize},
+    symbols,
+    widgets::{block::Title, Axis, Block, Borders, Chart, Dataset, GraphType, LegendPosition},
+    Frame, Terminal,
 };
 
-use crate::data::GpuMonitoringData;
+use crate::{
+    data::{GpuDeviceMonitor, GpuMonitoringData},
+    utils::bytes_to_mib_gib,
+};
+
+use self::views::{render_memory_chart, render_temperature_chart, render_usage_chart};
+
+mod views;
 
 #[derive(Default, Debug, PartialEq, Eq)]
 enum SelectedProcessTab {
@@ -61,7 +72,7 @@ pub fn run_tui_app() -> Result<(), Box<dyn Error>> {
 
     // create app and run it
     let tick_rate = Duration::from_millis(250);
-    let app = TuiApp::new();
+    let app = TuiApp::default();
     let res = run_app(&mut terminal, app, tick_rate);
 
     // restore terminal
@@ -80,6 +91,23 @@ pub fn run_tui_app() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+fn ui(frame: &mut Frame, app: &mut TuiApp) {
+    let area = frame.size();
+
+    app.data.update();
+
+    let vertical = Layout::vertical([Constraint::Percentage(60), Constraint::Percentage(40)]);
+    let horizontal = Layout::horizontal([Constraint::Ratio(1, 2), Constraint::Ratio(1, 2)]);
+    let [chart1, bottom] = vertical.areas(area);
+    let [line_chart, scatter] = horizontal.areas(bottom);
+
+    let gpu = &mut app.data.gpus()[0];
+
+    render_usage_chart(frame, chart1, gpu);
+    render_memory_chart(frame, line_chart, gpu);
+    render_temperature_chart(frame, scatter, gpu);
+}
+
 fn run_app<B: Backend>(
     terminal: &mut Terminal<B>,
     mut app: TuiApp,
@@ -87,7 +115,7 @@ fn run_app<B: Backend>(
 ) -> io::Result<()> {
     let mut last_tick = Instant::now();
     loop {
-        terminal.draw(|f| ui(f, &app))?;
+        terminal.draw(|f| ui(f, &mut app))?;
 
         let timeout = tick_rate
             .checked_sub(last_tick.elapsed())
@@ -102,7 +130,7 @@ fn run_app<B: Backend>(
             }
         }
         if last_tick.elapsed() >= tick_rate {
-            app.on_tick();
+            // app.on_tick();
             last_tick = Instant::now();
         }
     }

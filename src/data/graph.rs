@@ -16,7 +16,7 @@ impl GraphViewerData {
         self.trim_length()
     }
 
-    pub fn trim_length(&mut self) {
+    fn trim_length(&mut self) {
         let max_len = 5000;
 
         while self.historical.len() > max_len {
