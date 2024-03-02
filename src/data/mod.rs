@@ -51,6 +51,7 @@ pub struct GpuDeviceMonitor {
 
     graphics_processes: ProcessTableData,
     compute_processes: ProcessTableData,
+    all_processes: ProcessTableData,
 
     max_memory: u64,
 }
@@ -70,6 +71,12 @@ impl GpuDeviceMonitor {
             })),
             compute_processes: ProcessTableData::new(Box::new(|device| {
                 device.running_compute_processes()
+            })),
+            all_processes: ProcessTableData::new(Box::new(|device| {
+                let graphics = device.running_graphics_processes()?;
+                let compute = device.running_compute_processes()?;
+
+                Ok(graphics.into_iter().chain(compute.into_iter()).collect())
             })),
 
             max_memory: device.memory_info().unwrap().total,
@@ -98,6 +105,7 @@ impl GpuDeviceMonitor {
 
         self.graphics_processes.update(device);
         self.compute_processes.update(device);
+        self.all_processes.update(device);
     }
 
     pub fn memory_graph_mut(&mut self) -> &mut GraphViewerData {
@@ -118,6 +126,10 @@ impl GpuDeviceMonitor {
 
     pub fn compute_processes_mut(&mut self) -> &mut ProcessTableData {
         &mut self.compute_processes
+    }
+
+    pub fn all_processes_mut(&mut self) -> &mut ProcessTableData {
+        &mut self.all_processes
     }
 
     pub fn device_name(&self) -> &str {

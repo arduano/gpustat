@@ -36,6 +36,7 @@ fn load_icon(data: &[u8]) -> IconData {
 #[derive(Default, Debug, PartialEq, Eq)]
 enum SelectedProcessTab {
     #[default]
+    All,
     Graphics,
     Compute,
 }
@@ -72,7 +73,7 @@ impl Default for GpuApp {
         Self {
             data: GpuMonitoringData::new(),
             updated_style: false,
-            selected_process_tab: SelectedProcessTab::Graphics,
+            selected_process_tab: Default::default(),
             selected_gpu: 0,
         }
     }
@@ -151,6 +152,11 @@ impl eframe::App for GpuApp {
                 |ui| {
                     ui.selectable_value(
                         &mut self.selected_process_tab,
+                        SelectedProcessTab::All,
+                        "All",
+                    );
+                    ui.selectable_value(
+                        &mut self.selected_process_tab,
                         SelectedProcessTab::Graphics,
                         "Graphics",
                     );
@@ -165,14 +171,14 @@ impl eframe::App for GpuApp {
             let monitor = &mut self.data.gpus()[self.selected_gpu];
 
             match self.selected_process_tab {
-                SelectedProcessTab::Compute => {
+                SelectedProcessTab::All => {
                     let mut ui = ui.child_ui_with_id_source(
                         ui.available_rect_before_wrap(),
                         Layout::top_down(Align::Min),
-                        "compute",
+                        "all",
                     );
 
-                    render_process_table(&mut ui, monitor.compute_processes_mut());
+                    render_process_table(&mut ui, monitor.all_processes_mut());
                 }
                 SelectedProcessTab::Graphics => {
                     let mut ui = ui.child_ui_with_id_source(
@@ -182,6 +188,15 @@ impl eframe::App for GpuApp {
                     );
 
                     render_process_table(&mut ui, monitor.graphics_processes_mut());
+                }
+                SelectedProcessTab::Compute => {
+                    let mut ui = ui.child_ui_with_id_source(
+                        ui.available_rect_before_wrap(),
+                        Layout::top_down(Align::Min),
+                        "compute",
+                    );
+
+                    render_process_table(&mut ui, monitor.compute_processes_mut());
                 }
             };
         });

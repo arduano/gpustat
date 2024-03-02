@@ -1,5 +1,5 @@
 use eframe::{
-    egui::{self, Layout, Sense},
+    egui::{self, Label, Layout, Sense},
     emath::Align,
     epaint::Rect,
 };
@@ -125,10 +125,10 @@ fn table_column_head(
                 SortingDirection::Ascending => "🔽",
                 SortingDirection::Descending => "🔼",
             };
-            ui.label(icon);
+            ui.add(Label::new(icon).selectable(false));
         }
 
-        ui.label(text);
+        ui.add(Label::new(text).selectable(false));
     });
 }
 

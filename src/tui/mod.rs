@@ -20,11 +20,14 @@ use ratatui::{
 };
 
 use crate::{
-    data::{GpuDeviceMonitor, GpuMonitoringData},
+    data::{process_table::ProcessTableData, GpuDeviceMonitor, GpuMonitoringData},
     utils::bytes_to_mib_gib,
 };
 
-use self::views::{render_memory_chart, render_temperature_chart, render_usage_chart};
+use self::views::{
+    render_memory_chart, render_process_table, render_temperature_chart, render_usage_chart,
+    ProcessTableState,
+};
 
 mod views;
 
@@ -49,6 +52,8 @@ pub struct TuiApp {
     updated_style: bool,
 
     selected_gpu: usize,
+
+    table_state: ProcessTableState,
 }
 
 impl Default for TuiApp {
@@ -58,6 +63,7 @@ impl Default for TuiApp {
             updated_style: false,
             selected_process_tab: SelectedProcessTab::Graphics,
             selected_gpu: 0,
+            table_state: Default::default(),
         }
     }
 }
@@ -98,14 +104,23 @@ fn ui(frame: &mut Frame, app: &mut TuiApp) {
 
     let vertical = Layout::vertical([Constraint::Percentage(60), Constraint::Percentage(40)]);
     let horizontal = Layout::horizontal([Constraint::Ratio(1, 2), Constraint::Ratio(1, 2)]);
-    let [chart1, bottom] = vertical.areas(area);
-    let [line_chart, scatter] = horizontal.areas(bottom);
+
+    let [top, bottom] = vertical.areas(area);
+    let [top_left, top_right] = horizontal.areas(top);
+    let [bottom_left, bottom_right] = horizontal.areas(bottom);
 
     let gpu = &mut app.data.gpus()[0];
 
-    render_usage_chart(frame, chart1, gpu);
-    render_memory_chart(frame, line_chart, gpu);
-    render_temperature_chart(frame, scatter, gpu);
+    render_process_table(
+        frame,
+        top_right,
+        gpu.all_processes_mut().processes(),
+        &mut app.table_state,
+    );
+
+    render_usage_chart(frame, top_left, gpu);
+    render_memory_chart(frame, bottom_left, gpu);
+    render_temperature_chart(frame, bottom_right, gpu);
 }
 
 fn run_app<B: Backend>(
@@ -130,7 +145,6 @@ fn run_app<B: Backend>(
             }
         }
         if last_tick.elapsed() >= tick_rate {
-            // app.on_tick();
             last_tick = Instant::now();
         }
     }
