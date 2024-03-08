@@ -11,6 +11,7 @@ pub enum TableColumn {
     Pid,
     Name,
     GpuMemory,
+    GpuUsage,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -62,7 +63,12 @@ impl ProcessTableData {
 
     fn fetch_last_process_array(&mut self, device: &Device) -> Result<Vec<ProcessData>, NvmlError> {
         let processes = (self.fetcher)(device)?;
-        Ok(self.process_bank.map_process_list(processes))
+
+        let utilization_list = device.process_utilization_stats(None).unwrap_or_default();
+
+        Ok(self
+            .process_bank
+            .map_process_list(processes, utilization_list))
     }
 
     pub fn update(&mut self, device: &Device) {
@@ -104,6 +110,14 @@ impl ProcessTableData {
                     (UsedGpuMemory::Used(_), UsedGpuMemory::Unavailable) => Ordering::Less,
                     (UsedGpuMemory::Unavailable, UsedGpuMemory::Used(_)) => Ordering::Greater,
                     (UsedGpuMemory::Unavailable, UsedGpuMemory::Unavailable) => Ordering::Equal,
+                },
+                self.sorting.direction,
+            ),
+            TableColumn::GpuUsage => self.get_processes_sorted_by(
+                |a, b| {
+                    a.gpu_usage
+                        .partial_cmp(&b.gpu_usage)
+                        .unwrap_or(Ordering::Equal)
                 },
                 self.sorting.direction,
             ),
