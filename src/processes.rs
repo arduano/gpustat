@@ -1,4 +1,4 @@
-use nvml_wrapper::struct_wrappers::device::ProcessInfo;
+use nvml_wrapper::struct_wrappers::device::{ProcessInfo, ProcessUtilizationSample};
 use sysinfo::{ProcessRefreshKind, RefreshKind, System};
 
 pub struct ProcessDataBank {
@@ -23,7 +23,7 @@ impl ProcessDataBank {
         process.name()
     }
 
-    pub fn map_process_list(&mut self, process_list: Vec<ProcessInfo>) -> Vec<ProcessData> {
+    pub fn map_process_list(&mut self, process_list: Vec<ProcessInfo>, utilization_list: Vec<ProcessUtilizationSample>) -> Vec<ProcessData> {
         // Refresh the process data every 2 seconds
         if self.last_refresh.elapsed().as_secs() > 2 {
             self.sys.refresh_all();
@@ -37,8 +37,15 @@ impl ProcessDataBank {
                 continue;
             }
 
+            let gpu_usage = utilization_list
+                .iter()
+                .find(|util| util.pid == process.pid)
+                .map(|util| util.sm_util)
+                .unwrap_or(0);
+
             result.push(ProcessData {
                 name: self.get_process_name(process.pid).to_string(),
+                gpu_usage,
                 info: process,
             });
         }
@@ -49,4 +56,6 @@ impl ProcessDataBank {
 pub struct ProcessData {
     pub info: ProcessInfo,
     pub name: String,
+    /// The percentage GPU utilization of the process.
+    pub gpu_usage: u32,
 }
