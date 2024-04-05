@@ -23,7 +23,11 @@ impl ProcessDataBank {
         process.name()
     }
 
-    pub fn map_process_list(&mut self, process_list: Vec<ProcessInfo>, utilization_list: Vec<ProcessUtilizationSample>) -> Vec<ProcessData> {
+    pub fn map_process_list(
+        &mut self,
+        process_list: Vec<ProcessInfo>,
+        utilization_list: Vec<ProcessUtilizationSample>,
+    ) -> Vec<ProcessData> {
         // Refresh the process data every 2 seconds
         if self.last_refresh.elapsed().as_secs() > 2 {
             self.sys.refresh_all();

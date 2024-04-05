@@ -14,7 +14,7 @@ mod graph;
 mod process_table;
 mod style;
 
-const ICON: &[u8] = include_bytes!("../../assets/icon_64px.png");
+const ICON: &[u8] = include_bytes!("../../assets/gpustat_icon_64px.png");
 
 fn load_icon(data: &[u8]) -> IconData {
     let (icon_rgba, icon_width, icon_height) = {
