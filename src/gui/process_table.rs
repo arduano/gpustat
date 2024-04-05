@@ -24,7 +24,8 @@ pub fn render_process_table(ui: &mut egui::Ui, data: &mut ProcessTableData) {
         .striped(true)
         .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
         .column(Column::auto())
-        .column(Column::initial(200.0).clip(true).resizable(true))
+        .column(Column::initial(150.0).clip(true).resizable(true))
+        .column(Column::initial(150.0).clip(true).resizable(true))
         .column(Column::remainder())
         .header(20.0, |mut header| {
             header
@@ -37,6 +38,14 @@ pub fn render_process_table(ui: &mut egui::Ui, data: &mut ProcessTableData) {
                     ui,
                     TableColumn::GpuMemory,
                     "GPU Memory",
+                    &mut data.sorting_mut(),
+                )
+            });
+            header.col(|ui| {
+                table_column_head(
+                    ui,
+                    TableColumn::GpuUsage,
+                    "GPU Usage",
                     &mut data.sorting_mut(),
                 )
             });
@@ -60,6 +69,11 @@ pub fn render_process_table(ui: &mut egui::Ui, data: &mut ProcessTableData) {
                     row.col(|ui| {
                         draw_table_cell(ui, |ui| {
                             ui.label(format_used_gpu_memory(&process.info.used_gpu_memory));
+                        });
+                    });
+                    row.col(|ui| {
+                        draw_table_cell(ui, |ui| {
+                            ui.label(format!("{}%", process.gpu_usage));
                         });
                     });
                 });
