@@ -1,6 +1,6 @@
 [Desktop Entry]
 Exec=gpustat
-Icon=icon_64px
+Icon=gpustat_icon_64px
 Name=gpustat
 Terminal=false
 Type=Application
